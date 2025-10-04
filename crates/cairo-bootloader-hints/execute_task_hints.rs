@@ -1,11 +1,12 @@
 use std::any::Any;
 use std::collections::HashMap;
 
+use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::HintProcessorData;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
     get_ptr_from_var_name, get_relocatable_from_var_name, insert_value_from_var_name,
 };
 use cairo_vm::hint_processor::hint_processor_definition::{
-    ExtensionData, HintExtension, HintProcessor, HintReference,
+    HintExtension, HintProcessor, HintReference,
 };
 use cairo_vm::serde::deserialize_program::{ApTracking, Identifier};
 use cairo_vm::types::builtin_name::BuiltinName;
@@ -25,8 +26,8 @@ use crate::hints::load_cairo_pie::load_cairo_pie;
 use crate::hints::program_hash::compute_program_hash_chain;
 use crate::hints::program_loader::ProgramLoader;
 use crate::hints::types::{BootloaderVersion, ProgramIdentifiers, Task};
-use crate::hints::vars;
-use crate::TaskSpec;
+use crate::hints::{vars, TaskSpec};
+// use crate::TaskSpec;
 
 use super::types::{CairoPieTask, RunProgramTask};
 
@@ -45,7 +46,7 @@ fn get_program_from_task(task: &Box<dyn Task>) -> Result<Program, HintError> {
 }
 
 fn get_task_from_exec_scopes(exec_scopes: &ExecutionScopes) -> Result<Box<dyn Task>, HintError> {
-    let local_variables = exec_scopes.get_local_variables()?;
+    let local_variables: &HashMap<String, Box<dyn Any>> = exec_scopes.get_local_variables()?;
     let task_spec: &TaskSpec = local_variables
         .get(vars::TASK)
         .unwrap()
@@ -63,20 +64,20 @@ fn get_task_from_exec_scopes(exec_scopes: &ExecutionScopes) -> Result<Box<dyn Ta
 pub fn allocate_program_data_segment(
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-    ids_data: &HashMap<String, HintReference>,
-    ap_tracking: &ApTracking,
-) -> Result<HintExtension, HintError> {
+    hint_data: &HintProcessorData,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
     let program_data_segment = vm.add_memory_segment();
     exec_scopes.insert_value(vars::PROGRAM_DATA_BASE, program_data_segment);
     insert_value_from_var_name(
         "program_data_ptr",
         program_data_segment,
         vm,
-        ids_data,
-        ap_tracking,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
     )?;
 
-    Ok(HashMap::new())
+    Ok(())
 }
 
 fn field_element_to_felt(field_element: FieldElement) -> Felt252 {
@@ -96,14 +97,14 @@ fn field_element_to_felt(field_element: FieldElement) -> Felt252 {
 pub fn load_program_hint(
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-    ids_data: &HashMap<String, HintReference>,
-    ap_tracking: &ApTracking,
-) -> Result<HintExtension, HintError> {
+    hint_data: &HintProcessorData,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
     let program_data_base: Relocatable = exec_scopes.get(vars::PROGRAM_DATA_BASE)?;
     let task = get_task_from_exec_scopes(exec_scopes)?;
     let program = get_stripped_program_from_task(&task)?;
 
-    let program_header_ptr = get_ptr_from_var_name("program_header", vm, ids_data, ap_tracking)?;
+    let program_header_ptr = get_ptr_from_var_name("program_header", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
 
     // Offset of the builtin_list field in `ProgramHeader`, cf. execute_task.cairo
     let builtins_offset = 4;
@@ -121,7 +122,7 @@ pub fn load_program_hint(
 
     exec_scopes.insert_value(vars::PROGRAM_ADDRESS, loaded_program.code_address);
 
-    Ok(HashMap::new())
+    Ok(())
 }
 
 /// Implements
@@ -139,16 +140,16 @@ pub fn load_program_hint(
 pub fn append_fact_topologies(
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-    ids_data: &HashMap<String, HintReference>,
-    ap_tracking: &ApTracking,
-) -> Result<HintExtension, HintError> {
+    hint_data: &HintProcessorData,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
     let task = get_task_from_exec_scopes(exec_scopes)?;
     let output_runner_data = exec_scopes.get(vars::OUTPUT_RUNNER_DATA)?;
 
     let pre_execution_builtin_ptrs_addr =
-        get_relocatable_from_var_name("pre_execution_builtin_ptrs", vm, ids_data, ap_tracking)?;
+        get_relocatable_from_var_name("pre_execution_builtin_ptrs", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
     let return_builtin_ptrs_addr =
-        get_relocatable_from_var_name("return_builtin_ptrs", vm, ids_data, ap_tracking)?;
+        get_relocatable_from_var_name("return_builtin_ptrs", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
 
     // The output field is the first one in the BuiltinData struct
     let output_start = vm.get_relocatable(pre_execution_builtin_ptrs_addr)?;
@@ -163,7 +164,7 @@ pub fn append_fact_topologies(
         .get_mut_ref::<Vec<FactTopology>>(vars::FACT_TOPOLOGIES)?
         .push(fact_topology);
 
-    Ok(HashMap::new())
+    Ok(())
 }
 
 /// Implements
@@ -176,13 +177,13 @@ pub fn append_fact_topologies(
 pub fn validate_hash(
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-    ids_data: &HashMap<String, HintReference>,
-    ap_tracking: &ApTracking,
-) -> Result<HintExtension, HintError> {
+    hint_data: &HintProcessorData,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
     let task = get_task_from_exec_scopes(exec_scopes)?;
     let program = get_stripped_program_from_task(&task)?;
 
-    let output_ptr = get_ptr_from_var_name("output_ptr", vm, ids_data, ap_tracking)?;
+    let output_ptr = get_ptr_from_var_name("output_ptr", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
     let program_hash_ptr = (output_ptr + 1)?;
 
     let program_hash = vm.get_integer(program_hash_ptr)?.into_owned();
@@ -201,7 +202,7 @@ pub fn validate_hash(
         ));
     }
 
-    Ok(HashMap::new())
+    Ok(())
 }
 
 /// List of all builtins in the order used by the bootloader.
@@ -306,9 +307,9 @@ fn write_return_builtins(
 pub fn write_return_builtins_hint(
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-    ids_data: &HashMap<String, HintReference>,
-    ap_tracking: &ApTracking,
-) -> Result<HintExtension, HintError> {
+    hint_data: &HintProcessorData,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
     let task = get_task_from_exec_scopes(exec_scopes)?;
     let n_builtins: usize = exec_scopes.get(vars::N_BUILTINS)?;
 
@@ -321,11 +322,11 @@ pub fn write_return_builtins_hint(
     //     used_builtins=builtins, used_builtins_addr=ids.used_builtins_addr,
     //     pre_execution_builtins_addr=ids.pre_execution_builtin_ptrs.address_, task=task)
     let return_builtins_addr =
-        get_relocatable_from_var_name("return_builtin_ptrs", vm, ids_data, ap_tracking)?;
+        get_relocatable_from_var_name("return_builtin_ptrs", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
     let used_builtins_addr =
-        get_ptr_from_var_name("used_builtins_addr", vm, ids_data, ap_tracking)?;
+        get_ptr_from_var_name("used_builtins_addr", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
     let pre_execution_builtins_addr =
-        get_relocatable_from_var_name("pre_execution_builtin_ptrs", vm, ids_data, ap_tracking)?;
+        get_relocatable_from_var_name("pre_execution_builtin_ptrs", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
 
     write_return_builtins(
         vm,
@@ -343,7 +344,7 @@ pub fn write_return_builtins_hint(
         n_builtins,
     )]));
 
-    Ok(HashMap::new())
+    Ok(())
 }
 
 fn get_bootloader_identifiers(
@@ -417,13 +418,13 @@ Implements hint:
 %}
 */
 pub fn call_task(
-    hint_processor: &mut dyn HintProcessor,
+    // hint_processor: &mut dyn HintProcessor,
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-    ids_data: &HashMap<String, HintReference>,
-    ap_tracking: &ApTracking,
-) -> Result<HintExtension, HintError> {
-    let mut hint_extension = HashMap::new();
+    hint_data: &HintProcessorData,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
+    // let mut hint_extension = HashMap::new();
     // assert isinstance(task, Task)
     let task = get_task_from_exec_scopes(exec_scopes)?;
     // n_builtins = len(task.get_program().builtins)
@@ -441,8 +442,8 @@ pub fn call_task(
         // TODO: the content of this function is mostly useless for the Rust VM.
         //       check with SW if there is nothing of interest here.
         // vm_load_program(task.program, program_address)
-        let task_hint_extension = vm_load_program(hint_processor, exec_scopes)?;
-        hint_extension.extend(task_hint_extension);
+        // let task_hint_extension = vm_load_program(hint_processor, exec_scopes)?;
+        // hint_extension.extend(task_hint_extension);
     } else if let Some(cairo_pie_task) = task.as_any().downcast_ref::<CairoPieTask>() {
         let program_address: Relocatable = exec_scopes.get("program_address")?;
 
@@ -479,7 +480,7 @@ pub fn call_task(
     //     output_builtin=output_builtin,
     //     output_ptr=ids.pre_execution_builtin_ptrs.output)
     let pre_execution_builtin_ptrs_addr =
-        get_relocatable_from_var_name(vars::PRE_EXECUTION_BUILTIN_PTRS, vm, ids_data, ap_tracking)?;
+        get_relocatable_from_var_name(vars::PRE_EXECUTION_BUILTIN_PTRS, vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
     // The output field is the first one in the BuiltinData struct
     let output_ptr = vm.get_relocatable((pre_execution_builtin_ptrs_addr + 0)?)?;
     let output_runner_data =
@@ -490,66 +491,69 @@ pub fn call_task(
 
     exec_scopes.enter_scope(new_task_locals);
 
-    Ok(hint_extension)
+    Ok(())
 }
 
-fn vm_load_program(
-    hint_processor: &mut dyn HintProcessor,
-    exec_scopes: &mut ExecutionScopes,
-) -> Result<HashMap<Relocatable, ExtensionData>, HintError> {
-    let task_program_address: Relocatable = exec_scopes.get(vars::PROGRAM_ADDRESS).unwrap();
-    let task = get_task_from_exec_scopes(exec_scopes)?;
-    let task_program = get_program_from_task(&task)?;
+// fn vm_load_program(
+//     hint_processor: &mut dyn HintProcessor,
+//     exec_scopes: &mut ExecutionScopes,
+// ) -> Result<(), HintError> {
+//     let task_program_address: Relocatable = exec_scopes.get(vars::PROGRAM_ADDRESS).unwrap();
+//     let task = get_task_from_exec_scopes(exec_scopes)?;
+//     let task_program = get_program_from_task(&task)?;
 
-    let mut task_program_compiled_hints = HashMap::new();
-    let task_program_hints = task_program.get_hints();
-    let task_program_hint_ranges = task_program.get_hints_ranges();
-    let task_program_references = task_program.get_references();
-    let task_program_constants = task_program.get_constants();
+//     // let mut task_program_compiled_hints: HashMap<Relocatable, _> = HashMap::new();
+//     // let task_program_hints = task_program.get_hints();
+//     // let task_program_hint_ranges = task_program.get_hints_ranges();
+//     // let task_program_references = task_program.get_references();
+//     // let task_program_constants = task_program.get_constants();
 
-    for hint_range in task_program_hint_ranges {
-        let hint_pc = hint_range.0;
-        let hint_range_indices = hint_range.1;
-        let (s, l) = hint_range_indices;
-        for idx in *s..(*s + l.get()) {
-            let hint = task_program_hints.get(idx).unwrap();
+//     for hint_range in task_program_hint_ranges {
+//         let hint_pc = hint_range.0;
+//         let hint_range_indices = hint_range.1;
+//         let (s, l) = hint_range_indices;
+//         for idx in *s..(*s + l.get()) {
+//             let hint = task_program_hints.get(idx).unwrap();
 
-            let new_hint_pc_segment = hint_pc.segment_index + task_program_address.segment_index;
-            let new_hint_pc_offset = hint_pc.offset + task_program_address.offset;
-            let new_hint_pc = Relocatable::from((new_hint_pc_segment, new_hint_pc_offset));
+//             let new_hint_pc_segment = hint_pc.segment_index + task_program_address.segment_index;
+//             let new_hint_pc_offset = hint_pc.offset + task_program_address.offset;
+//             let new_hint_pc = Relocatable::from((new_hint_pc_segment, new_hint_pc_offset));
 
-            let compiled_hint = hint_processor.compile_hint(
-                hint.code.as_str(),
-                &hint.flow_tracking_data.ap_tracking,
-                &hint.flow_tracking_data.reference_ids,
-                task_program_references,
-            )?;
-            task_program_compiled_hints
-                .entry(new_hint_pc)
-                .or_insert_with(ExtensionData::default)
-                .hints
-                .push(compiled_hint);
-        }
-    }
+//             let compiled_hint = hint_processor.compile_hint(
+//                 hint.code.as_str(),
+//                 &hint.flow_tracking_data.ap_tracking,
+//                 &hint.flow_tracking_data.reference_ids,
+//                 task_program_references,
+//             )?;
+//             task_program_compiled_hints
+//                 .entry(new_hint_pc)
+//                 .or_insert_with(ExtensionData::default)
+//                 .hints
+//                 .push(compiled_hint);
+//         }
+//     }
 
-    task_program_compiled_hints
-        .iter_mut()
-        .for_each(|(_, extension_data)| {
-            extension_data
-                .constants
-                .extend(task_program_constants.iter().map(|(k, v)| (k.clone(), *v)));
-        });
+//     task_program_compiled_hints
+//         .iter_mut()
+//         .for_each(|(_, extension_data)| {
+//             extension_data
+//                 .constants
+//                 .extend(task_program_constants.iter().map(|(k, v)| (k.clone(), *v)));
+//         });
 
-    Ok(task_program_compiled_hints)
-}
+//     Ok(task_program_compiled_hints)
+// }
 
 pub fn exit_scope_with_comments(
+    _vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-) -> Result<HintExtension, HintError> {
+    _hint_data: &HintProcessorData,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
     exec_scopes
         .exit_scope()
         .map_err(HintError::FromScopeError)?;
-    Ok(HashMap::new())
+    Ok(())
 }
 
 mod util {

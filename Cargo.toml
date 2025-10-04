@@ -8,20 +8,33 @@ name = "stwo-bootloader"
 path = "src/main.rs"
 
 [dependencies]
-cairo-vm = { git = "https://github.com/m-kus/cairo-vm.git", features = [
+stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "62c3c4a", features = [
+    "std",
+] }
+stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "62c3c4a" }
+stwo-cairo-serialize = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "62c3c4a" }
+cairo-air = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "62c3c4a" }
+cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
+cairo-lang-executable = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
+cairo-lang-runner = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
+cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
+cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
+serde_json = "1.0.138"
+cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", rev = "b1a91f929b5fa29a1a2e9e6990a68a1220c0c673", features = [
+    "mod_builtin",
+    "cairo-1-hints",
     "extensive_hints",
-], rev = "30474757faad1e6119d1910aee86814471a5f65c" }
-num-traits = "0.2.19"
-serde = { version = "1.0.202", features = ["derive"] }
-serde_json = "1.0.117"
+] }
 starknet-crypto = "0.6.2"
+serde = { version = "1.0.202", features = ["derive"] }
+num-traits = "0.2.19"
 starknet-types-core = "0.1.2"
 thiserror = "1.0.61"
 thiserror-no-std = "2.0.2"
 bincode = { version = "2.0.0-rc.3", default-features = false, features = [
     "serde",
 ] }
-clap = { version = "4.5", features = ["derive"] }
+
 
 [dev-dependencies]
 assert_matches = "1.5.0"

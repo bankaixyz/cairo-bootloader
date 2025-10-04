@@ -1,6 +1,7 @@
 use std::any::Any;
 use std::collections::HashMap;
 
+use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::HintProcessorData;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::get_integer_from_var_name;
 use cairo_vm::hint_processor::hint_processor_definition::{HintExtension, HintReference};
 use cairo_vm::serde::deserialize_program::ApTracking;
@@ -8,6 +9,7 @@ use cairo_vm::types::errors::math_errors::MathError;
 use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::vm_core::VirtualMachine;
+use cairo_vm::Felt252;
 use num_traits::ToPrimitive;
 
 use crate::hints::vars;
@@ -17,11 +19,11 @@ use crate::hints::vars;
 pub fn select_builtins_enter_scope(
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-    ids_data: &HashMap<String, HintReference>,
-    ap_tracking: &ApTracking,
-) -> Result<HintExtension, HintError> {
+    hint_data: &HintProcessorData,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
     let n_selected_builtins =
-        get_integer_from_var_name(vars::N_SELECTED_BUILTINS, vm, ids_data, ap_tracking)?;
+        get_integer_from_var_name(vars::N_SELECTED_BUILTINS, vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
     let n_selected_builtins =
         n_selected_builtins
             .to_usize()
@@ -34,7 +36,7 @@ pub fn select_builtins_enter_scope(
         Box::new(n_selected_builtins) as Box<dyn Any>,
     )]));
 
-    Ok(HashMap::new())
+    Ok(())
 }
 
 #[cfg(test)]

@@ -1,3 +1,4 @@
+use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::HintProcessorData;
 use cairo_vm::Felt252;
 use std::collections::HashMap;
 
@@ -25,17 +26,17 @@ use crate::hints::vars;
 pub fn select_builtin(
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-    ids_data: &HashMap<String, HintReference>,
-    ap_tracking: &ApTracking,
-) -> Result<HintExtension, HintError> {
+    hint_data: &HintProcessorData,
+    _constants: &HashMap<String, Felt252>,
+) -> Result<(), HintError> {
     let n_selected_builtins: usize = exec_scopes.get(vars::N_SELECTED_BUILTINS)?;
 
     let select_builtin = if n_selected_builtins == 0 {
         false
     } else {
         let selected_encodings =
-            get_ptr_from_var_name("selected_encodings", vm, ids_data, ap_tracking)?;
-        let all_encodings = get_ptr_from_var_name("all_encodings", vm, ids_data, ap_tracking)?;
+            get_ptr_from_var_name("selected_encodings", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+        let all_encodings = get_ptr_from_var_name("all_encodings", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
 
         let selected_encoding = vm.get_integer(selected_encodings)?.into_owned();
         let builtin_encoding = vm.get_integer(all_encodings)?.into_owned();
@@ -48,15 +49,15 @@ pub fn select_builtin(
         "select_builtin",
         select_builtin_felt,
         vm,
-        ids_data,
-        ap_tracking,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
     )?;
 
     if select_builtin {
         exec_scopes.insert_value(vars::N_SELECTED_BUILTINS, n_selected_builtins - 1);
     }
 
-    Ok(HashMap::new())
+    Ok(())
 }
 
 #[cfg(test)]
