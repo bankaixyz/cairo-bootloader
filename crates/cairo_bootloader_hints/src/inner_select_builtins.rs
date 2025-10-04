@@ -5,8 +5,6 @@ use std::collections::HashMap;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
     get_ptr_from_var_name, insert_value_from_var_name,
 };
-use cairo_vm::hint_processor::hint_processor_definition::{HintExtension, HintReference};
-use cairo_vm::serde::deserialize_program::ApTracking;
 use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::vm_core::VirtualMachine;
@@ -34,9 +32,18 @@ pub fn select_builtin(
     let select_builtin = if n_selected_builtins == 0 {
         false
     } else {
-        let selected_encodings =
-            get_ptr_from_var_name("selected_encodings", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
-        let all_encodings = get_ptr_from_var_name("all_encodings", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+        let selected_encodings = get_ptr_from_var_name(
+            "selected_encodings",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+        let all_encodings = get_ptr_from_var_name(
+            "all_encodings",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
 
         let selected_encoding = vm.get_integer(selected_encodings)?.into_owned();
         let builtin_encoding = vm.get_integer(all_encodings)?.into_owned();

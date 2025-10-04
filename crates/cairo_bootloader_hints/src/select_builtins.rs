@@ -3,8 +3,6 @@ use std::collections::HashMap;
 
 use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::HintProcessorData;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::get_integer_from_var_name;
-use cairo_vm::hint_processor::hint_processor_definition::{HintExtension, HintReference};
-use cairo_vm::serde::deserialize_program::ApTracking;
 use cairo_vm::types::errors::math_errors::MathError;
 use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::vm::errors::hint_errors::HintError;
@@ -22,8 +20,12 @@ pub fn select_builtins_enter_scope(
     hint_data: &HintProcessorData,
     _constants: &HashMap<String, Felt252>,
 ) -> Result<(), HintError> {
-    let n_selected_builtins =
-        get_integer_from_var_name(vars::N_SELECTED_BUILTINS, vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let n_selected_builtins = get_integer_from_var_name(
+        vars::N_SELECTED_BUILTINS,
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
     let n_selected_builtins =
         n_selected_builtins
             .to_usize()

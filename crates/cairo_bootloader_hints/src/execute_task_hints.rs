@@ -5,10 +5,8 @@ use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_def
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
     get_ptr_from_var_name, get_relocatable_from_var_name, insert_value_from_var_name,
 };
-use cairo_vm::hint_processor::hint_processor_definition::{
-    HintExtension, HintProcessor, HintReference,
-};
-use cairo_vm::serde::deserialize_program::{ApTracking, Identifier};
+use cairo_vm::hint_processor::hint_processor_definition::HintExtension;
+use cairo_vm::serde::deserialize_program::Identifier;
 use cairo_vm::types::builtin_name::BuiltinName;
 use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::types::program::Program;
@@ -25,9 +23,9 @@ use crate::fact_topologies::{get_task_fact_topology, FactTopology};
 use crate::load_cairo_pie::load_cairo_pie;
 use crate::program_hash::compute_program_hash_chain;
 use crate::program_loader::ProgramLoader;
-use crate::types::{BootloaderVersion, ProgramIdentifiers, Task};
-use crate::{vars};
 use crate::types::TaskSpec;
+use crate::types::{BootloaderVersion, ProgramIdentifiers, Task};
+use crate::vars;
 
 use super::types::{CairoPieTask, RunProgramTask};
 
@@ -104,7 +102,12 @@ pub fn load_program_hint(
     let task = get_task_from_exec_scopes(exec_scopes)?;
     let program = get_stripped_program_from_task(&task)?;
 
-    let program_header_ptr = get_ptr_from_var_name("program_header", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let program_header_ptr = get_ptr_from_var_name(
+        "program_header",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
 
     // Offset of the builtin_list field in `ProgramHeader`, cf. execute_task.cairo
     let builtins_offset = 4;
@@ -146,10 +149,18 @@ pub fn append_fact_topologies(
     let task = get_task_from_exec_scopes(exec_scopes)?;
     let output_runner_data = exec_scopes.get(vars::OUTPUT_RUNNER_DATA)?;
 
-    let pre_execution_builtin_ptrs_addr =
-        get_relocatable_from_var_name("pre_execution_builtin_ptrs", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
-    let return_builtin_ptrs_addr =
-        get_relocatable_from_var_name("return_builtin_ptrs", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let pre_execution_builtin_ptrs_addr = get_relocatable_from_var_name(
+        "pre_execution_builtin_ptrs",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
+    let return_builtin_ptrs_addr = get_relocatable_from_var_name(
+        "return_builtin_ptrs",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
 
     // The output field is the first one in the BuiltinData struct
     let output_start = vm.get_relocatable(pre_execution_builtin_ptrs_addr)?;
@@ -183,7 +194,12 @@ pub fn validate_hash(
     let task = get_task_from_exec_scopes(exec_scopes)?;
     let program = get_stripped_program_from_task(&task)?;
 
-    let output_ptr = get_ptr_from_var_name("output_ptr", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let output_ptr = get_ptr_from_var_name(
+        "output_ptr",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
     let program_hash_ptr = (output_ptr + 1)?;
 
     let program_hash = vm.get_integer(program_hash_ptr)?.into_owned();
@@ -321,12 +337,24 @@ pub fn write_return_builtins_hint(
     //     memory=memory, return_builtins_addr=ids.return_builtin_ptrs.address_,
     //     used_builtins=builtins, used_builtins_addr=ids.used_builtins_addr,
     //     pre_execution_builtins_addr=ids.pre_execution_builtin_ptrs.address_, task=task)
-    let return_builtins_addr =
-        get_relocatable_from_var_name("return_builtin_ptrs", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
-    let used_builtins_addr =
-        get_ptr_from_var_name("used_builtins_addr", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
-    let pre_execution_builtins_addr =
-        get_relocatable_from_var_name("pre_execution_builtin_ptrs", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let return_builtins_addr = get_relocatable_from_var_name(
+        "return_builtin_ptrs",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
+    let used_builtins_addr = get_ptr_from_var_name(
+        "used_builtins_addr",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
+    let pre_execution_builtins_addr = get_relocatable_from_var_name(
+        "pre_execution_builtin_ptrs",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
 
     write_return_builtins(
         vm,
@@ -479,8 +507,12 @@ pub fn call_task(
     //     task=task,
     //     output_builtin=output_builtin,
     //     output_ptr=ids.pre_execution_builtin_ptrs.output)
-    let pre_execution_builtin_ptrs_addr =
-        get_relocatable_from_var_name(vars::PRE_EXECUTION_BUILTIN_PTRS, vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let pre_execution_builtin_ptrs_addr = get_relocatable_from_var_name(
+        vars::PRE_EXECUTION_BUILTIN_PTRS,
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
     // The output field is the first one in the BuiltinData struct
     let output_ptr = vm.get_relocatable((pre_execution_builtin_ptrs_addr + 0)?)?;
     let output_runner_data =

@@ -1,20 +1,18 @@
 use crate::fact_topologies::{
     compute_fact_topologies, configure_fact_topologies, write_to_fact_topologies_file, FactTopology,
 };
-use cairo_vm::{any_box, Felt252};
 use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::HintProcessorData;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
     get_integer_from_var_name, get_ptr_from_var_name, insert_value_from_var_name,
     insert_value_into_ap,
 };
-use cairo_vm::hint_processor::hint_processor_definition::{HintExtension, HintReference};
-use cairo_vm::serde::deserialize_program::ApTracking;
 use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::types::relocatable::{MaybeRelocatable, Relocatable};
 use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::errors::memory_errors::MemoryError;
 use cairo_vm::vm::runners::builtin_runner::OutputBuiltinState;
 use cairo_vm::vm::vm_core::VirtualMachine;
+use cairo_vm::{any_box, Felt252};
 use num_traits::ToPrimitive;
 use std::any::Any;
 use std::collections::HashMap;
@@ -179,7 +177,13 @@ pub fn load_bootloader_config(
 
     // Store the args in the VM memory
     let args_segment = gen_arg(vm, &args)?;
-    insert_value_from_var_name("bootloader_config", args_segment, vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    insert_value_from_var_name(
+        "bootloader_config",
+        args_segment,
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
 
     Ok(())
 }
@@ -199,10 +203,15 @@ pub fn enter_packed_output_scope(
 ) -> Result<(), HintError> {
     // task_id = len(packed_outputs) - ids.n_subtasks
     let packed_outputs: Vec<PackedOutput> = exec_scopes.get(vars::PACKED_OUTPUTS)?;
-    let n_subtasks = get_integer_from_var_name("n_subtasks", vm, &hint_data.ids_data, &hint_data.ap_tracking)
-        .unwrap()
-        .to_usize()
-        .unwrap();
+    let n_subtasks = get_integer_from_var_name(
+        "n_subtasks",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )
+    .unwrap()
+    .to_usize()
+    .unwrap();
     let task_id = packed_outputs.len() - n_subtasks;
     // packed_output: PackedOutput = packed_outputs[task_id]
     let packed_output: Box<dyn Any> = Box::new(packed_outputs[task_id].clone());
@@ -264,7 +273,7 @@ pub fn assert_is_composite_packed_output(
     match packed_output {
         PackedOutput::Composite(_) => Ok(()),
         other => Err(HintError::CustomHint(
-            format!("Expected composite packed output, got {:?}", other).into_boxed_str(),
+            format!("Expected composite packed output, got {other:?}").into_boxed_str(),
         )),
     }
 }
@@ -281,7 +290,12 @@ pub fn save_output_pointer(
     hint_data: &HintProcessorData,
     _constants: &HashMap<String, Felt252>,
 ) -> Result<(), HintError> {
-    let output_ptr = get_ptr_from_var_name("output_ptr", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let output_ptr = get_ptr_from_var_name(
+        "output_ptr",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
     exec_scopes.insert_value(vars::OUTPUT_START, output_ptr);
     Ok(())
 }
@@ -453,8 +467,12 @@ pub fn assert_program_address(
     hint_data: &HintProcessorData,
     _constants: &HashMap<String, Felt252>,
 ) -> Result<(), HintError> {
-    let ids_program_address =
-        get_ptr_from_var_name(vars::PROGRAM_ADDRESS, vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let ids_program_address = get_ptr_from_var_name(
+        vars::PROGRAM_ADDRESS,
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
     let program_address: Relocatable = exec_scopes.get(vars::PROGRAM_ADDRESS)?;
 
     if ids_program_address != program_address {

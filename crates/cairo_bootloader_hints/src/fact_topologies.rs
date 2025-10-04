@@ -363,8 +363,7 @@ fn get_program_task_fact_topology(
         other => {
             return Err(FactTopologyError::Internal(
                 format!(
-                    "Additional data of output builtin is not of the expected type: {:?}",
-                    other
+                    "Additional data of output builtin is not of the expected type: {other:?}"
                 )
                 .into_boxed_str(),
             ))

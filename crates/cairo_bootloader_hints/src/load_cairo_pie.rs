@@ -73,6 +73,12 @@ pub struct RelocationTable {
     relocations: HashMap<isize, Relocatable>,
 }
 
+impl Default for RelocationTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RelocationTable {
     pub fn new() -> Self {
         Self {

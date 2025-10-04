@@ -1,15 +1,11 @@
-use crate::execute_task_hints::ALL_BUILTINS;
 use crate::fact_topologies::FactTopology;
 use crate::types::{RunProgramTask, SimpleBootloaderInput, TaskSpec};
 use crate::vars;
 use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::HintProcessorData;
-use cairo_vm::hint_processor::builtin_hint_processor::hint_code;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
     get_integer_from_var_name, get_ptr_from_var_name, insert_value_from_var_name,
     insert_value_into_ap,
 };
-use cairo_vm::hint_processor::hint_processor_definition::{HintExtension, HintReference};
-use cairo_vm::serde::deserialize_program::ApTracking;
 use cairo_vm::types::errors::math_errors::MathError;
 use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::vm::errors::hint_errors::HintError;
@@ -41,7 +37,12 @@ pub fn prepare_task_range_checks(
     let n_tasks = simple_bootloader_input.tasks.len();
 
     // memory[ids.output_ptr] = n_tasks
-    let output_ptr = get_ptr_from_var_name("output_ptr", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let output_ptr = get_ptr_from_var_name(
+        "output_ptr",
+        vm,
+        &hint_data.ids_data,
+        &hint_data.ap_tracking,
+    )?;
     vm.insert_value(output_ptr, Felt252::from(n_tasks))?;
 
     // ids.task_range_check_ptr = segments.add_temp_segment()
@@ -83,7 +84,7 @@ pub fn set_tasks_variable(
     _constants: &HashMap<String, Felt252>,
 ) -> Result<(), HintError> {
     let simple_bootloader_input: &SimpleBootloaderInput =
-    exec_scopes.get_ref(vars::SIMPLE_BOOTLOADER_INPUT)?;
+        exec_scopes.get_ref(vars::SIMPLE_BOOTLOADER_INPUT)?;
     exec_scopes.insert_value(vars::TASKS, simple_bootloader_input.tasks.clone());
 
     Ok(())
@@ -133,7 +134,8 @@ pub fn set_ap_to_zero_or_one(
 ) -> Result<(), HintError> {
     let simple_bootloader_input: &SimpleBootloaderInput =
         exec_scopes.get_ref(vars::SIMPLE_BOOTLOADER_INPUT)?;
-    let n_tasks_felt = get_integer_from_var_name("n_tasks", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let n_tasks_felt =
+        get_integer_from_var_name("n_tasks", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
     let n_tasks = n_tasks_felt
         .to_usize()
         .ok_or(MathError::Felt252ToUsizeConversion(Box::new(n_tasks_felt)))?;
@@ -167,7 +169,8 @@ pub fn set_current_task(
 ) -> Result<(), HintError> {
     let simple_bootloader_input: &SimpleBootloaderInput =
         exec_scopes.get_ref(vars::SIMPLE_BOOTLOADER_INPUT)?;
-    let n_tasks_felt = get_integer_from_var_name("n_tasks", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+    let n_tasks_felt =
+        get_integer_from_var_name("n_tasks", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
     let n_tasks = n_tasks_felt
         .to_usize()
         .ok_or(MathError::Felt252ToUsizeConversion(Box::new(n_tasks_felt)))?;
@@ -181,7 +184,7 @@ pub fn set_current_task(
             if let Some(run_program_task) = task.as_any().downcast_ref::<RunProgramTask>() {
                 exec_scopes
                     .insert_value(vars::TASK, TaskSpec::RunProgram(run_program_task.clone()));
-            } 
+            }
             // else if let Some(cairo_pie_task) = task.as_any().downcast_ref::<CairoPieTask>() {
             //     exec_scopes
             //         .insert_value(vars::TASK, TaskSpec::CairoPieTask(cairo_pie_task.clone()));
