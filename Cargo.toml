@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "crates/cairo_bootloader_hints",
+    "crates/cairo_runner",
 ]
 resolver = "2"
 
@@ -14,7 +15,6 @@ cairo-air = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "62c3c
 cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
 cairo-lang-executable = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
 cairo-lang-runner = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
-cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo.git", rev = "5cc466a" }
 serde_json = "1.0.138"
 cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", rev = "b1a91f929b5fa29a1a2e9e6990a68a1220c0c673", features = [
@@ -33,3 +33,7 @@ bincode = { version = "2.0.0-rc.3", default-features = false, features = [
 ] }
 tracing = { version = "0.1.41" }
 num-bigint = { version = "0.4.1" }
+
+clap = { version = "4.5.22", features = ["derive"] }
+
+cairo-lang-casm = { version = "2.12.3" }
