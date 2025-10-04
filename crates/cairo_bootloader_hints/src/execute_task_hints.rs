@@ -21,13 +21,13 @@ use cairo_vm::vm::vm_core::VirtualMachine;
 use cairo_vm::{any_box, Felt252};
 use starknet_crypto::FieldElement;
 
-use crate::hints::fact_topologies::{get_task_fact_topology, FactTopology};
-use crate::hints::load_cairo_pie::load_cairo_pie;
-use crate::hints::program_hash::compute_program_hash_chain;
-use crate::hints::program_loader::ProgramLoader;
-use crate::hints::types::{BootloaderVersion, ProgramIdentifiers, Task};
-use crate::hints::{vars, TaskSpec};
-// use crate::TaskSpec;
+use crate::fact_topologies::{get_task_fact_topology, FactTopology};
+use crate::load_cairo_pie::load_cairo_pie;
+use crate::program_hash::compute_program_hash_chain;
+use crate::program_loader::ProgramLoader;
+use crate::types::{BootloaderVersion, ProgramIdentifiers, Task};
+use crate::{vars};
+use crate::types::TaskSpec;
 
 use super::types::{CairoPieTask, RunProgramTask};
 
@@ -600,7 +600,7 @@ mod tests {
 
     use rstest::{fixture, rstest};
 
-    use crate::hints::codes::EXECUTE_TASK_CALL_TASK;
+    use crate::codes::EXECUTE_TASK_CALL_TASK;
 
     use crate::{
         add_segments, define_segments, ids_data, non_continuous_ids_data, run_hint, vm,

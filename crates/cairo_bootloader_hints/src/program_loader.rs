@@ -7,7 +7,7 @@ use cairo_vm::vm::runners::cairo_pie::StrippedProgram;
 use cairo_vm::vm::vm_core::VirtualMachine;
 use cairo_vm::Felt252;
 
-use crate::hints::types::BootloaderVersion;
+use crate::types::BootloaderVersion;
 
 #[derive(thiserror_no_std::Error, Debug)]
 pub enum ProgramLoaderError {

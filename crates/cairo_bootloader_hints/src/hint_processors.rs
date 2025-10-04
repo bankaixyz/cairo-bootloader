@@ -13,7 +13,7 @@
 // use cairo_vm::Felt252;
 // use starknet_types_core::felt::Felt;
 
-// use crate::hints::bootloader_hints::{
+// use crate::bootloader_hints::{
 //     assert_is_composite_packed_output, assert_program_address,
 //     compute_and_configure_fact_topologies, enter_packed_output_scope,
 //     guess_pre_image_of_subtasks_output_hash, import_packed_output_schemas, is_plain_packed_output,
@@ -21,14 +21,14 @@
 //     prepare_simple_bootloader_output_segment, restore_bootloader_output, save_output_pointer,
 //     save_packed_outputs, set_packed_output_to_subtasks,
 // };
-// use crate::hints::codes::*;
-// use crate::hints::execute_task_hints::{
+// use crate::codes::*;
+// use crate::execute_task_hints::{
 //     allocate_program_data_segment, append_fact_topologies, call_task, exit_scope_with_comments,
 //     load_program_hint, validate_hash, write_return_builtins_hint,
 // };
-// use crate::hints::inner_select_builtins::select_builtin;
-// use crate::hints::select_builtins::select_builtins_enter_scope;
-// use crate::hints::simple_bootloader_hints::{
+// use crate::inner_select_builtins::select_builtin;
+// use crate::select_builtins::select_builtins_enter_scope;
+// use crate::simple_bootloader_hints::{
 //     divide_num_by_2, prepare_task_range_checks, set_ap_to_zero, set_ap_to_zero_or_one,
 //     set_current_task, set_tasks_variable,
 // };

@@ -11,7 +11,7 @@ use cairo_vm::types::exec_scope::ExecutionScopes;
 use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::vm_core::VirtualMachine;
 
-use crate::hints::vars;
+use crate::vars;
 
 /// Sets ids.select_builtin to 1 if the first builtin should be selected and 0 otherwise.
 ///

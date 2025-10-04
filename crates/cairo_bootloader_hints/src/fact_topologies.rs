@@ -13,7 +13,7 @@ use cairo_vm::vm::runners::cairo_pie::{
 };
 use serde::Serialize;
 
-use crate::hints::types::{PackedOutput, Task};
+use crate::types::{PackedOutput, Task};
 
 use super::types::{CairoPieTask, RunProgramTask};
 
@@ -447,7 +447,7 @@ pub fn write_to_fact_topologies_file<FT: AsRef<FactTopology>>(
 mod tests {
     use std::collections::HashMap;
 
-    use crate::hints::types::CompositePackedOutput;
+    use crate::types::CompositePackedOutput;
     use rstest::{fixture, rstest};
 
     use super::*;

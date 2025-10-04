@@ -12,7 +12,7 @@ use cairo_vm::vm::vm_core::VirtualMachine;
 use cairo_vm::Felt252;
 use num_traits::ToPrimitive;
 
-use crate::hints::vars;
+use crate::vars;
 
 /// Implements
 /// %{ vm_enter_scope({'n_selected_builtins': ids.n_selected_builtins}) %}

@@ -1,4 +1,4 @@
-use crate::hints::fact_topologies::{
+use crate::fact_topologies::{
     compute_fact_topologies, configure_fact_topologies, write_to_fact_topologies_file, FactTopology,
 };
 use cairo_vm::{any_box, Felt252};
@@ -19,8 +19,8 @@ use num_traits::ToPrimitive;
 use std::any::Any;
 use std::collections::HashMap;
 
-use crate::hints::types::{BootloaderInput, CompositePackedOutput, PackedOutput};
-use crate::hints::vars;
+use crate::types::{BootloaderInput, CompositePackedOutput, PackedOutput};
+use crate::vars;
 
 /// Implements
 /// ```no-run
@@ -469,12 +469,12 @@ pub fn assert_program_address(
 mod tests {
     use num_traits::ToPrimitive;
 
-    use crate::hints::codes::{
+    use crate::codes::{
         BOOTLOADER_GUESS_PRE_IMAGE_OF_SUBTASKS_OUTPUT_HASH, BOOTLOADER_SAVE_OUTPUT_POINTER,
         BOOTLOADER_SAVE_PACKED_OUTPUTS, BOOTLOADER_SET_PACKED_OUTPUT_TO_SUBTASKS,
         EXECUTE_TASK_ASSERT_PROGRAM_ADDRESS,
     };
-    use crate::hints::types::{BootloaderConfig, SimpleBootloaderInput};
+    use crate::types::{BootloaderConfig, SimpleBootloaderInput};
     use crate::{
         add_segments, define_segments, ids_data, run_hint, vm, MinimalBootloaderHintProcessor,
     };

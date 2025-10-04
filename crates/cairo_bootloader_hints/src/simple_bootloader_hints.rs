@@ -1,7 +1,7 @@
-use crate::hints::execute_task_hints::ALL_BUILTINS;
-use crate::hints::fact_topologies::FactTopology;
-use crate::hints::types::{RunProgramTask, SimpleBootloaderInput, TaskSpec};
-use crate::hints::vars;
+use crate::execute_task_hints::ALL_BUILTINS;
+use crate::fact_topologies::FactTopology;
+use crate::types::{RunProgramTask, SimpleBootloaderInput, TaskSpec};
+use crate::vars;
 use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::HintProcessorData;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_code;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
@@ -213,10 +213,10 @@ mod tests {
     use num_traits::ToPrimitive;
     use rstest::{fixture, rstest};
 
-    use crate::hints::fact_topologies::FactTopology;
+    use crate::fact_topologies::FactTopology;
 
-    use crate::hints::types::TaskSpec;
-    use crate::hints::vars;
+    use crate::types::TaskSpec;
+    use crate::vars;
     use crate::{add_segments, define_segments, ids_data, vm};
 
     use super::*;
