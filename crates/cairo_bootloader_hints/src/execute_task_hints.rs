@@ -98,8 +98,10 @@ pub fn load_program_hint(
     hint_data: &HintProcessorData,
     _constants: &HashMap<String, Felt252>,
 ) -> Result<(), HintError> {
+    println!("Loading program hint fn");
     let program_data_base: Relocatable = exec_scopes.get(vars::PROGRAM_DATA_BASE)?;
     let task = get_task_from_exec_scopes(exec_scopes)?;
+    println!("Task obtained");
     let program = get_stripped_program_from_task(&task)?;
 
     let program_header_ptr = get_ptr_from_var_name(
@@ -112,6 +114,7 @@ pub fn load_program_hint(
     // Offset of the builtin_list field in `ProgramHeader`, cf. execute_task.cairo
     let builtins_offset = 4;
     let mut program_loader = ProgramLoader::new(vm, builtins_offset);
+    println!("Program loader created");
     let bootloader_version: BootloaderVersion = 0;
     let loaded_program = program_loader
         .load_program(program_header_ptr, &program, Some(bootloader_version))

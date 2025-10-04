@@ -25,10 +25,22 @@ pub fn make_bootloader_tasks(
 ) -> Result<TaskSpec, BootloaderTaskError> {
     let program = get_program_from_executable(program);
 
+    let program_input_map = if let Some(input) = program_input {
+        if let serde_json::Value::Object(map) = input {
+            map.into_iter()
+                .map(|(k, v)| (k, v))
+                .collect::<HashMap<String, serde_json::Value>>()
+        } else {
+            HashMap::new()
+        }
+    } else {
+        HashMap::new()
+    };
+
     let task = TaskSpec::RunProgram(RunProgramTask {
         program,
         // program_input: program_input.unwrap().into_object().unwrap(),
-        program_input: HashMap::new(),
+        program_input: program_input_map,
         use_poseidon: true,
     });
     Ok(task)
@@ -49,14 +61,14 @@ fn get_program_from_executable(program: &Path) -> Program {
     let entrypoint = executable
         .entrypoints
         .iter()
-        .find(|e| matches!(e.kind, EntryPointKind::Standalone))
+        .find(|e| matches!(e.kind, EntryPointKind::Bootloader))
         .expect("Failed to find entrypoint");
 
-    let program = Program::new_for_proof(
+    let program = Program::new(
         entrypoint.builtins.clone(),
         data,
-        entrypoint.offset,
-        entrypoint.offset + 4,
+        Some(entrypoint.offset),
+        // entrypoint.offset + 4,
         hints,
         Default::default(),
         Default::default(),

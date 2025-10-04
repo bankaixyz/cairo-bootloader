@@ -15,8 +15,8 @@ impl BootloaderHintProcessor {
         Self { 
             builtin_hint_proc: BuiltinHintProcessor::new_empty(),
             cairo1_builtin_hint_proc: Cairo1HintProcessor::new(Default::default(), Default::default(), true),
-            hints: HashMap::new(),
-            extensive_hints: HashMap::new(),
+            hints: Self::hints(),
+            extensive_hints: Self::extensive_hints(),
         }
     }
 
