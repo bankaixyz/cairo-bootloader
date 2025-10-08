@@ -32,15 +32,12 @@ fn cairo_run_bootloader_in_proof_mode(
     let mut hint_processor = BootloaderHintProcessor::new();
 
     let cairo_run_config = CairoRunConfig {
-        entrypoint: "main",
-        trace_enabled: true,
-        relocate_mem: true,
         layout: LayoutName::all_cairo_stwo,
+        trace_enabled: true,
+        relocate_trace: true,
+        relocate_mem: true,
         proof_mode: true,
-        secure_run: None,
-        disable_trace_padding: true,
-        allow_missing_builtins: None,
-        dynamic_layout_params: None,
+        fill_holes: true,
         ..Default::default()
     };
 
@@ -160,40 +157,52 @@ struct Args {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let args = Args::parse();
-    let bootloader_program = load_bootloader()?;
+    // let args = Args::parse();
+    // let bootloader_program = load_bootloader()?;
 
-    let pie_paths: Vec<&Path> = args.pie.iter().map(|p| p.as_ref()).collect();
-    let tasks = make_bootloader_tasks(None, None, Some(&pie_paths))?;
+    // let pie_paths: Vec<&Path> = args.pie.iter().map(|p| p.as_ref()).collect();
+    // let 
+    // let tasks = make_bootloader_tasks(
+        
 
-    let mut runner = cairo_run_bootloader_in_proof_mode(&bootloader_program, tasks)?;
 
-    let mut output_buffer = "Program Output:\n".to_string();
-    runner.vm.write_output(&mut output_buffer)?;
-    print!("{output_buffer}");
-    println!("--------------------------------");
+    // )?;
 
-    std::fs::create_dir_all(&args.output_path).unwrap();
-    let (private_input, public_input) = prover_input_from_runner(&runner, &args.output_path);
+    // let mut runner = cairo_run_bootloader_in_proof_mode(&bootloader_program, tasks)?;
 
-    let priv_json = serde_json::to_string(&private_input).unwrap();
-    let pub_json = serde_json::to_string(&public_input).unwrap();
-    std::fs::write(args.output_path.join("priv.json"), priv_json).unwrap();
-    std::fs::write(args.output_path.join("pub.json"), pub_json).unwrap();
+    // let mut output_buffer = "Program Output:\n".to_string();
+    // runner.vm.write_output(&mut output_buffer)?;
+    // print!("{output_buffer}");
+    // println!("--------------------------------");
 
-    let resources = runner
-        .get_execution_resources()
-        .expect("failed to get execution resources, but the run was successful");
+    // std::fs::create_dir_all(&args.output_path).unwrap();
+    // let (private_input, public_input) = prover_input_from_runner(&runner, &args.output_path);
 
-    let builtin_instance_counter = resources
-        .builtin_instance_counter
-        .into_iter()
-        .map(|(k, v)| (k.to_string(), v))
-        .collect::<Vec<_>>();
+    // let priv_json = serde_json::to_string(&private_input).unwrap();
+    // let pub_json = serde_json::to_string(&public_input).unwrap();
+    // std::fs::write(args.output_path.join("priv.json"), priv_json).unwrap();
+    // std::fs::write(args.output_path.join("pub.json"), pub_json).unwrap();
 
-    println!("n_steps: {}", resources.n_steps);
-    println!("n_memory_holes: {}", resources.n_memory_holes);
-    println!("builtin_instance_counter: {:#?}", builtin_instance_counter);
+    // let resources = runner
+    //     .get_execution_resources()
+    //     .expect("failed to get execution resources, but the run was successful");
+
+    // let builtin_instance_counter = resources
+    //     .builtin_instance_counter
+    //     .into_iter()
+    //     .map(|(k, v)| (k.to_string(), v))
+    //     .collect::<Vec<_>>();
+
+    // println!("n_steps: {}", resources.n_steps);
+    // println!("n_memory_holes: {}", resources.n_memory_holes);
+    // println!("builtin_instance_counter: {:#?}", builtin_instance_counter);
+
+    let json = r#"{ "AllocSegment": { "dst": { "register": "AP", "offset": 0 } } }"#;
+    let hint: Hint = serde_json::from_str(json).expect("serde feature must be on");
+    match hint {
+        Hint::Core(_) => println!("Core variant available and deserialized."),
+        _ => panic!("Unexpected variant"),
+    }
 
     Ok(())
 }

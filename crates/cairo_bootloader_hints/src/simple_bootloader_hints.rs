@@ -94,13 +94,13 @@ pub fn set_tasks_variable(
 /// (compiled to %{ memory[ap] = to_felt_or_relocatable(ids.num // 2) %}).
 pub fn divide_num_by_2(
     vm: &mut VirtualMachine,
-    exec_scopes: &mut ExecutionScopes,
+    _exec_scopes: &mut ExecutionScopes,
     hint_data: &HintProcessorData,
     _constants: &HashMap<String, Felt252>,
 ) -> Result<(), HintError> {
     let felt = get_integer_from_var_name("num", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
     // Unwrapping is safe in this context, 2 != 0
-    let two = NonZeroFelt::try_from(Felt252::from(2)).unwrap();
+    let two = NonZeroFelt::try_from(&Felt252::from(2)).unwrap();
     let felt_divided_by_2 = felt.floor_div(&two);
 
     insert_value_into_ap(vm, felt_divided_by_2)?;

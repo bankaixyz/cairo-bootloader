@@ -1,9 +1,14 @@
 use bincode::enc::write::Writer;
+use cairo_lang_casm::hints::Hint;
+use cairo_lang_runner::Arg;
 use cairo_runner::bootloaders::load_bootloader;
 use cairo_runner::hint_processor::BootloaderHintProcessor;
 use cairo_runner::insert_bootloader_input;
+use cairo_lang_execute_utils::user_args_from_flags;
+
 use cairo_runner::task::make_bootloader_tasks;
 use clap::Parser;
+use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
 use std::io::Write;
@@ -33,8 +38,10 @@ use serde::{Deserialize, Serialize};
 fn cairo_run_bootloader_in_proof_mode(
     bootloader_program: &Program,
     tasks: Vec<TaskSpec>,
+    string_to_hint: HashMap<String, Hint>,
+    user_args: Vec<Vec<Arg>>,
 ) -> Result<CairoRunner, CairoRunError> {
-    let mut hint_processor = BootloaderHintProcessor::new();
+    let mut hint_processor = BootloaderHintProcessor::new(string_to_hint, user_args);
 
     let cairo_run_config = CairoRunConfig {
         entrypoint: "main",
@@ -166,14 +173,15 @@ struct Args {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
     let bootloader_program = load_bootloader()?;
-    let program_input = serde_json::from_reader(std::fs::File::open(args.input_path).unwrap())?;
+    let program_input = serde_json::from_reader(std::fs::File::open(args.input_path.clone()).unwrap())?;
     let program_path = args.program_path;
 
-    let task = make_bootloader_tasks(
-        &program_path,
-        Some(program_input),
-    )?;
-    let mut runner = cairo_run_bootloader_in_proof_mode(&bootloader_program, vec![task])?;
+    let (task, string_to_hint) = make_bootloader_tasks(&program_path, Some(program_input))?;
+
+    let user_args = user_args_from_flags(Some(&args.input_path), &[])?;
+
+    // println!("string_to_hint: {:#?}", string_to_hint);
+    let mut runner = cairo_run_bootloader_in_proof_mode(&bootloader_program, vec![task], string_to_hint, vec![vec![Arg::Array(user_args)]])?;
 
     let mut output_buffer = "Program Output:\n".to_string();
     runner.vm.write_output(&mut output_buffer)?;

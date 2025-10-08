@@ -1,6 +1,7 @@
 use std::any::Any;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 
+use cairo_lang_casm::hints::Hint;
 use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::HintProcessorData;
 use cairo_vm::hint_processor::builtin_hint_processor::hint_utils::{
     get_ptr_from_var_name, get_relocatable_from_var_name, insert_value_from_var_name,
@@ -450,6 +451,7 @@ Implements hint:
 */
 pub fn call_task(
     hint_processor: &mut dyn HintProcessor,
+    hint_map: &HashMap<String, Hint>,
     vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
     hint_data: &HintProcessorData,
@@ -467,13 +469,16 @@ pub fn call_task(
         let program_input = run_program_task.program_input.clone();
         // new_task_locals['program_input'] = task.program_input
         new_task_locals.insert("program_input".to_string(), any_box![program_input]);
+        println!("Program input inserted");
         // new_task_locals['WITH_BOOTLOADER'] = True
         new_task_locals.insert("WITH_BOOTLOADER".to_string(), any_box![true]);
-
+        println!("WITH_BOOTLOADER inserted");
         // TODO: the content of this function is mostly useless for the Rust VM.
         //       check with SW if there is nothing of interest here.
         // vm_load_program(task.program, program_address)
-        let task_hint_extension = vm_load_program(hint_processor, vm, exec_scopes, hint_data, _constants)?;
+        let task_hint_extension =
+            vm_load_program(hint_processor, hint_map, vm, exec_scopes, hint_data, _constants)?;
+        println!("Task hint extension received");
         hint_extension.extend(task_hint_extension);
     } else if let Some(cairo_pie_task) = task.as_any().downcast_ref::<CairoPieTask>() {
         let program_address: Relocatable = exec_scopes.get("program_address")?;
@@ -525,55 +530,58 @@ pub fn call_task(
     exec_scopes.insert_value(vars::OUTPUT_RUNNER_DATA, output_runner_data);
 
     exec_scopes.enter_scope(new_task_locals);
+    println!("Task locals inserted");
 
     Ok(hint_extension)
 }
 
 fn vm_load_program(
-    hint_processor: &mut dyn HintProcessor,
-    vm: &mut VirtualMachine,
+    _hint_processor: &mut dyn HintProcessor,
+    hint_map: &HashMap<String, Hint>,
+    _vm: &mut VirtualMachine,
     exec_scopes: &mut ExecutionScopes,
-    hint_data: &HintProcessorData,
+    _hint_data: &HintProcessorData,
     _constants: &HashMap<String, Felt252>,
 ) -> Result<HintExtension, HintError> {
+    println!("vm_load_program");
     let task_program_address: Relocatable = exec_scopes.get(vars::PROGRAM_ADDRESS).unwrap();
     let task = get_task_from_exec_scopes(exec_scopes)?;
     let task_program = get_program_from_task(&task)?;
+    println!("Task program obtained");
 
     let mut task_program_compiled_hints: HintExtension = HashMap::new();
-    let task_program_hints = task_program.shared_program_data.hints_collection.hints.as_slice();
-    let task_program_hint_ranges = &task_program.shared_program_data.hints_collection.hints_ranges;
-    let task_program_references = &task_program.shared_program_data.reference_manager;
+    let task_program_hints = task_program
+        .shared_program_data
+        .hints_collection
+        .hints
+        .as_slice();
+    let task_program_hint_ranges = &task_program
+        .shared_program_data
+        .hints_collection
+        .hints_ranges;
 
     for (hint_pc, (s, l)) in task_program_hint_ranges.iter() {
         for idx in *s..(*s + l.get()) {
-            let hint = task_program_hints.get(idx).unwrap();
+            let hint_param: &HintParams = task_program_hints.get(idx).unwrap();
+            let hint = hint_map.get(&hint_param.code).unwrap();
 
             let new_hint_pc_segment = hint_pc.segment_index + task_program_address.segment_index;
             let new_hint_pc_offset = hint_pc.offset + task_program_address.offset;
             let new_hint_pc = Relocatable::from((new_hint_pc_segment, new_hint_pc_offset));
 
-            let compiled_hint = hint_processor.compile_hint(
-                hint.code.as_str(),
-                &hint.flow_tracking_data.ap_tracking,
-                &hint.flow_tracking_data.reference_ids,
-                task_program_references,
-            )?;
             task_program_compiled_hints
                 .entry(new_hint_pc)
                 .or_insert_with(Vec::new)
-                .push(compiled_hint);
+                .push(Box::new(hint.clone()));
         }
     }
 
     Ok(task_program_compiled_hints)
-
 }
 
 //     // let mut task_program_compiled_hints: HashMap<Relocatable, _> = HashMap::new();
 //     // let task_program_hints = task_program.get_hints();
 //     // let task_program_hint_ranges = task_program.get_hints_ranges();
-
 
 //     for hint_range in task_program_hint_ranges {
 //         let hint_pc = hint_range.0;
@@ -640,6 +648,7 @@ mod util {
         let output_state = if task.as_any().downcast_ref::<RunProgramTask>().is_some() {
             let output_state = output_builtin.get_state();
             output_builtin.new_state(output_ptr.segment_index as usize, 0, true);
+            // output_builtin.new_state(output_ptr.segment_index as usize, true);
             Ok(Some(output_state))
         } else if task.as_any().downcast_ref::<CairoPieTask>().is_some() {
             Ok(None)

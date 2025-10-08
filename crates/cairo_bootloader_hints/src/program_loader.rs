@@ -152,7 +152,6 @@ impl<'vm> ProgramLoader<'vm> {
         bootloader_version: Option<BootloaderVersion>,
     ) -> Result<LoadedProgram, ProgramLoaderError> {
         let header_size = self.load_header(base_address, program, bootloader_version)?;
-
         let program_address = (base_address + header_size)?;
         self.load_code(program_address, program)?;
 

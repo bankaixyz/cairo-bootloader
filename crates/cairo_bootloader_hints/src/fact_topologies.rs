@@ -1,5 +1,5 @@
 use cairo_vm::types::builtin_name::BuiltinName;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 use std::path::Path;
 
@@ -362,10 +362,8 @@ fn get_program_task_fact_topology(
         BuiltinAdditionalData::Output(data) => data,
         other => {
             return Err(FactTopologyError::Internal(
-                format!(
-                    "Additional data of output builtin is not of the expected type: {other:?}"
-                )
-                .into_boxed_str(),
+                format!("Additional data of output builtin is not of the expected type: {other:?}")
+                    .into_boxed_str(),
             ))
         }
     };
@@ -406,14 +404,14 @@ pub fn get_task_fact_topology(
                 match additional_data {
                     BuiltinAdditionalData::Output(output_data) => output_data,
                     _ => &OutputBuiltinAdditionalData {
-                        pages: HashMap::new(),
-                        attributes: HashMap::new(),
+                        pages: BTreeMap::new(),
+                        attributes: BTreeMap::new(),
                     },
                 }
             } else {
                 &OutputBuiltinAdditionalData {
-                    pages: HashMap::new(),
-                    attributes: HashMap::new(),
+                    pages: BTreeMap::new(),
+                    attributes: BTreeMap::new(),
                 }
             }
         };

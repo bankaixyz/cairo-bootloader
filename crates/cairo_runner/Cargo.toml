@@ -17,6 +17,7 @@ tracing.workspace = true
 bincode.workspace = true
 clap.workspace = true
 cairo-lang-executable.workspace = true
+cairo-lang-execute-utils.workspace = true
 cairo-lang-runner.workspace = true
 rayon = "1.10"
 num_cpus = "1.16"

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use cairo_vm::types::builtin_name::BuiltinName;
 use cairo_vm::types::errors::math_errors::MathError;
@@ -213,7 +213,7 @@ pub fn build_cairo_pie_relocation_table(
 
 fn extend_additional_data(
     builtin: &mut SignatureBuiltinRunner,
-    data: &HashMap<Relocatable, (Felt252, Felt252)>,
+    data: &BTreeMap<Relocatable, (Felt252, Felt252)>,
     relocation_table: &RelocationTable,
 ) -> Result<(), SignatureRelocationError> {
     for (addr, signature) in data {
