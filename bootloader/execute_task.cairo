@@ -8,6 +8,7 @@ from starkware.cairo.common.registers import get_ap, get_fp_and_pc
 from starkware.cairo.common.cairo_blake2s.blake2s import (
     encode_felt252_data_and_calc_224_bit_blake_hash,
 )
+from bootloader.print import info_felt, info_felt_hex, info_string, info_uint256, info_uint384, info_segment_hex, debug_felt, debug_felt_hex, debug_string, debug_uint256, debug_uint384, debug_segment_hex
 
 const BOOTLOADER_VERSION = 0;
 
@@ -68,6 +69,8 @@ func execute_task{builtin_ptrs: BuiltinData*, self_range_check_ptr}(
     // Allocate memory for local variables.
     alloc_locals;
 
+    info_string('In execute_task');
+
     // Get the value of fp.
     let (local __fp__, _) = get_fp_and_pc();
 
@@ -89,6 +92,7 @@ func execute_task{builtin_ptrs: BuiltinData*, self_range_check_ptr}(
             builtins_offset=ids.ProgramHeader.builtin_list)
         segments.finalize(program_data_base.segment_index, program_data_size)
     %}
+    info_string('got program_header');
 
     // Verify that the bootloader version is compatible with the bootloader.
     assert program_header.bootloader_version = BOOTLOADER_VERSION;
@@ -99,6 +103,9 @@ func execute_task{builtin_ptrs: BuiltinData*, self_range_check_ptr}(
             program_data_ptr=program_data_ptr
         );
     }
+    info_string('computed program_hash');
+    info_felt_hex(hash);
+
 
     // Write hash_chain result to output_ptr + 1.
     assert [output_ptr + 1] = hash;
@@ -186,7 +193,9 @@ func execute_task{builtin_ptrs: BuiltinData*, self_range_check_ptr}(
     %}
 
     // Call the inner program's main() function.
+    info_string('calling program_entry_point');
     call abs program_entry_point;
+    info_string('program_entry_point returned');
 
     ret_pc_label:
     %{

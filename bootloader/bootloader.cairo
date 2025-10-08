@@ -9,6 +9,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin, PoseidonBuiltin
 from starkware.cairo.common.find_element import find_element
 from starkware.cairo.common.hash_state import hash_felts
 from starkware.cairo.common.memcpy import memcpy
+from bootloader.print import info_felt, info_felt_hex, info_string, info_uint256, info_uint384, info_segment_hex, debug_felt, debug_felt_hex, debug_string, debug_uint256, debug_uint384, debug_segment_hex
 
 struct BootloaderConfig {
     // The hash of the simple bootloader program.
@@ -42,6 +43,8 @@ func main{
 }() {
     ap += SIZEOF_LOCALS;
 
+    info_string('In Bootloader');
+
     local simple_bootloader_output_start: felt*;
     %{
         from starkware.cairo.bootloaders.bootloader.objects import BootloaderInput
@@ -57,11 +60,12 @@ func main{
 
     // Save segment's start.
     let simple_bootloader_output_ptr: felt* = simple_bootloader_output_start;
-
+    info_string('Calling simple bootloader');
     // Call the simple bootloader program to execute direct subtasks. Simple bootloader input is
     // contained in the bootloader input.
     %{ simple_bootloader_input = bootloader_input %}
     run_simple_bootloader{output_ptr=simple_bootloader_output_ptr}();
+    info_string('Simple bootloader returned');
     local range_check_ptr = range_check_ptr;
     local ecdsa_ptr = ecdsa_ptr;
     local bitwise_ptr = bitwise_ptr;
@@ -70,12 +74,13 @@ func main{
     local poseidon_ptr: PoseidonBuiltin* = poseidon_ptr;
     local range_check96_ptr = range_check96_ptr;
     local simple_bootloader_output_end: felt* = simple_bootloader_output_ptr;
+    info_string('re-alloc builtins');
 
     %{
         # Restore the bootloader's output builtin state.
         output_builtin.set_state(output_builtin_state)
     %}
-
+    info_string('setting config');
     local bootloader_config: BootloaderConfig*;
     %{
         from starkware.cairo.bootloaders.bootloader.objects import BootloaderConfig

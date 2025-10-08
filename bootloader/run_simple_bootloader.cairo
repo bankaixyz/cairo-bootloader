@@ -2,6 +2,7 @@ from bootloader.execute_task import BuiltinData, execute_task
 from starkware.cairo.common.cairo_builtins import HashBuiltin, PoseidonBuiltin
 from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.segments import relocate_segment
+from bootloader.print import info_felt, info_felt_hex, info_string, info_uint256, info_uint384, info_segment_hex, debug_felt, debug_felt_hex, debug_string, debug_uint256, debug_uint384, debug_segment_hex
 
 // Loads the programs and executes them.
 //
@@ -24,6 +25,7 @@ func run_simple_bootloader{
 }() {
     alloc_locals;
     local task_range_check_ptr;
+    info_string('In run_simple_bootloader');
 
     %{
         n_tasks = len(simple_bootloader_input.tasks)
@@ -40,6 +42,8 @@ func run_simple_bootloader{
 
     let n_tasks = [output_ptr];
     let output_ptr = output_ptr + 1;
+    info_string('n_tasks');
+    info_felt(n_tasks);
 
     // A struct containing the pointer to each builtin.
     local builtin_ptrs_before: BuiltinData = BuiltinData(
@@ -56,6 +60,8 @@ func run_simple_bootloader{
         mul_mod=0,
     );
 
+    info_string('builtin_ptrs_before');
+
     // A struct containing the encoding of each builtin.
     local builtin_encodings: BuiltinData = BuiltinData(
         output='output',
@@ -70,6 +76,7 @@ func run_simple_bootloader{
         add_mod='add_mod',
         mul_mod='mul_mod',
     );
+    info_string('builtin_encodings');
 
     local builtin_instance_sizes: BuiltinData = BuiltinData(
         output=1,
@@ -84,10 +91,11 @@ func run_simple_bootloader{
         add_mod=7,
         mul_mod=7,
     );
+    info_string('builtin_instance_sizes');
 
     // Call execute_tasks.
     let (__fp__, _) = get_fp_and_pc();
-
+    info_string('get_fp_and_pc');
     %{ tasks = simple_bootloader_input.tasks %}
     let builtin_ptrs = &builtin_ptrs_before;
     let self_range_check_ptr = range_check_ptr;
